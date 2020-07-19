@@ -34,25 +34,24 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const [login, password] = authorization.split(":");
-    const user = await users.findOne({ login });
-
+    const user = await User.findOne({ login, password });
+    console.log(user, login, password);
     if (!user) {
       res.sendStatus(401);
       return;
     }
 
-    if (user.login === login && user.password === password) {
-      next();
-    } else {
-      res.sendStatus(401);
-    }
+    req.user = user;
+    next();
   } catch (error) {
     next(error);
   }
 };
 router.get("/", async (req, res, next) => {
   try {
-    const advertisements = await Advertisement.find(req.query);
+    const advertisements = await Advertisement.find(req.query).populate(
+      "author"
+    );
     /* np. {
       body: /kupie/i,
     } */
@@ -65,7 +64,7 @@ router.get("/", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const advertisment = await Advertisement.findById(id);
+    const advertisment = await Advertisement.findById(id).populate("author");
     /*.populate("user");*/
     res.send(advertisment);
   } catch (error) {
@@ -73,11 +72,11 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", authMiddleware, async (req, res, next) => {
   try {
     const advertisment = new Advertisement(req.body);
-    advertisment.autor = req.user;
-    await advertisment.populate("user").save();
+    advertisment.author = req.user;
+    await advertisment.populate("author").save();
     res.status(201).send(advertisment);
   } catch (error) {
     next(error);
@@ -87,7 +86,7 @@ router.post("/", async (req, res, next) => {
 router.delete("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
-    await Advertisement.findByIdAndDelete(id).populate("user");
+    await Advertisement.findByIdAndDelete(id).populate("users");
     res.status(200).send("Deleted");
   } catch (error) {
     next(error);

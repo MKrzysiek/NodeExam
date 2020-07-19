@@ -17,9 +17,9 @@ const userSchema = mongoose.Schema({
         throw new Error("Password musi mieć minimum 5 znaków");
     },
   },
-  adds: [{ type: Schema.Types.ObjectId, ref: "Advertisements" }],
+  adds: [{ type: Schema.Types.ObjectId, ref: "advertisements" }],
   // date: { type: Date, default: Date.now },
 });
 
-const User = mongoose.model("Users", userSchema);
+const User = mongoose.model("users", userSchema);
 module.exports = User;
